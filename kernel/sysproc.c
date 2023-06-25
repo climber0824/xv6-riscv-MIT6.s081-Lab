@@ -89,3 +89,19 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_sysinfo(void)
+{
+  struct proc *p = myproc();
+  struct sysinfo info;
+  uint64 addr;
+  if (argaddr(0, &addr) < 0)
+    return -1;
+
+  info.freemem = freemems();
+  info.nproc = procnum();
+  if (copyout(p->pagetable, addr, (char *)&info, sizeof(struct sysinfo)) < 0)
+    return -1;
+  return 0;
+}
