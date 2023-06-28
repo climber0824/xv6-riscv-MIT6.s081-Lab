@@ -462,3 +462,39 @@ vmprint(pagetable_t pagetable, int level){
     }
   }
 }
+
+pagetable_t
+kptinit(){
+  pagetable_t k_pagetable;
+  k_pagetable = uvmcreate();
+
+  // uart registers
+  ukvmmap(k_pagetable, UART0, UART0, PGSIZE, PTE_R | PTE_W);
+
+  // virtio mmio dist interface
+  ukvmmap(k_pagetable, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
+
+  // CLINT
+  ukvmmap(k_pagetable, CLINT, CLINT, 0x10000, PTE_R | PTE_W);
+
+  // PLIC
+  ukvmmap(k_pagetable, PLIC, PLIC, 0x400000, PTE_R | PTE_W);
+
+  // map kernel text executable and real-only.
+  ukvmmap(k_pagetable, KERNBASE, KERNBASE, (uint64)etext-KERNBASE, PTE_R | PTE_X);
+  // map kernel data and the physical RAM we'll make use of.
+  ukvmmap(k_pagetable, (uint64)etext, (uint64)etext, PHYSTOP-(uint64)etext, PTE_R | PTE_W);
+  // map the trampoline for trap entry/exit to
+  // the highest virtual address in the kernel
+  ukvmmap(k_pagetable, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+
+  return k_pagetable;
+}
+
+// add a mapping to the kernel page table of user process
+void
+ukvmmap(pagetable_t pagetable, uint64 va, uint64 pa, uint64 sz. int perm)
+{
+  if(mappages(pagetable, va, sz, pa, perm) != 0)
+    panic("ukvmmap");
+}
