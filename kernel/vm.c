@@ -437,3 +437,28 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+
+/* Implement of vmprint */
+void
+vmprint(pagetable_t pagetable, int level){
+  if (level == 0)
+    printf("page table %p\n", pagetable);
+
+  // iterate 512 PTEs
+  for (int i = 0; i < 512; i++){
+    pte_t ptr = pagetable[i];
+    if (pte & PTE_V){
+      uint64 pa = PTE2PA(pte);
+      printf("..");
+      for (int j = 0; j < level; j++){
+        printf(" ..");
+      }
+      printf("%d: pte %p pa %p\n", i, pte, pa);
+
+      // PTE without any WRX bit set points to low-level page table
+      if ((pte & (PTE_W | PTE_R | PTE_X)) == 0)
+        vmprint((pagetable_t)pa, level + 1);
+    }
+  }
+}
