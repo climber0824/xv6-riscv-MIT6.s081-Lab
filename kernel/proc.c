@@ -50,11 +50,13 @@ procinit(void)
   struct proc *p;
   
   initlock(&pid_lock, "nextpid");
-  initlock(&wait_lock, "wait_lock");
+  // initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
-      p->state = UNUSED;
-      p->kstack = KSTACK((int) (p - proc));
+      // p->state = UNUSED;
+      // p->kstack = KSTACK((int) (p - proc));
+      uint64 va = KSTACK((int), 0);
+      p->kstack = va;
   }
 }
 
