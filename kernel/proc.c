@@ -478,14 +478,29 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->context);
+        
+	// switch to user kernel pagetable
+	w_satp(MAKE_SATP(p->k_pagetable));
+	sfence_vma();
+	swtch(&c->context, &p->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
-        c->proc = 0;
+        kvminithart(); // switch back to kernel_pagetable
+	c->proc = 0;
+
+	found = 1;
       }
       release(&p->lock);
     }
+#if !defined (LAB_FS)
+    if(found == 0){
+      intr_on();
+      asm volatile("wfi");
+    }
+#else
+    ;
+#endif
   }
 }
 
