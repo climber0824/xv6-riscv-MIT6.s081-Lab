@@ -135,6 +135,29 @@ kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
     panic("kvmmap");
 }
 
+// Translate a kernel virtual address to
+// a physical address. Only needed for
+// address on the stack.
+// Assumes va is page aligned.
+uint
+kvmpa(uint64 va)
+{
+  uint64 off = va % PGSIZE;
+  pte_t *pte;
+  uint64 pa;
+
+  struct proc *p = myproc();
+  pte = walk(p->k_pagetable, va, 0);
+  if(pte == 0)
+    panic("kvmpa, empty pte");
+  if((*pte & PTE_V) == 0)
+    panic("kvmpa, pte not valid");
+  pa = PTE2PA(*pte);
+
+  return pa+off;
+}
+
+
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned. Returns 0 on success, -1 if walk() couldn't
