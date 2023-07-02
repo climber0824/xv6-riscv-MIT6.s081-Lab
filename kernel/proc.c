@@ -142,6 +142,20 @@ found:
     return 0;
   }
 
+  // Set up kernel page table
+  p->k_pagetable = kptinit();
+  if(p->k_pagetable == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
+  // Map kstack to physical address and store in process's kernel table.
+  char *pa = kalloc();
+  if(pa == 0)
+    panic("kalloc");
+  mappages(p->k_pagetable, p->stack, PGSIZE, (uint64)pa, PTE_R | PTE_W);
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));
